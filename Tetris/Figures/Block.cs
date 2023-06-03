@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Tetris
+﻿namespace Tetris.Figures
 {
     public class Block
     {
@@ -15,7 +9,7 @@ namespace Tetris
         public int X => _x;
         public int Y => _y;
 
-        public Block(int x, int y) 
+        public Block(int x, int y)
         {
             _x = x;
             _y = y;
@@ -31,9 +25,15 @@ namespace Tetris
             _x++;
         }
 
-        public void MoveLeft() 
+        public void MoveLeft()
         {
             _x--;
+        }
+
+        public void AddUpToCoordinate(int x, int y)
+        {
+            _x += x;
+            _y += y;
         }
     }
 }

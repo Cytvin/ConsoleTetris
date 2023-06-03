@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Tetris.Figures;
 
 namespace Tetris
 {
     public class Game
     {
         private char[,] _field;
-        private List<Figure> _figures;
-        private Figure? _lastFigure;
+        private List<IFigure> _plasedFigures;
+        private List<Block> _placedBlocks;
+        private IFigure? _lastFigure;
         private Input _input;
+        private Random _random;
 
         private int _height;
         private int _width;
@@ -25,9 +23,12 @@ namespace Tetris
             _height = height;
             _width = width;
             _field = new char[height, width];
-            _figures = new List<Figure>();
+            _plasedFigures = new List<IFigure>();
+            _placedBlocks = new List<Block>();
             _input = new Input();
+            _random = new Random();
             _input.KeyPressed += MoveLastFigureByInput;
+            _lastFigure = Figure.MakeFigure(GetNextFigureType(_random));
 
             Initializing(height, width);
         }
@@ -43,7 +44,9 @@ namespace Tetris
             {
                 if (LastFigureIsNull)
                 {
-                    AddFigure(new Figure(FigureTypes.O));
+                    //FigureTypes newFigureType = GetNextFigureType(_random);
+
+                    AddFigure(Figure.MakeFigure(FigureTypes.I));
                     FieldChanged?.Invoke(Get());
                 }
 
@@ -58,26 +61,29 @@ namespace Tetris
             }
         }
 
-        public char[,] Get()
+        private char[,] Get()
         {
             Clear();
 
-            foreach (var figure in _figures) 
+            if (LastFigureIsNull == false)
             {
-                foreach (var block in figure.Blocks)
+                foreach (var block in _lastFigure.Blocks)
                 {
                     _field[block.Y, block.X] = block.Symbol;
                 }
             }
 
+            foreach (var block in _placedBlocks) 
+            {
+                _field[block.Y, block.X] = block.Symbol;
+            }
+
             return _field;
         }
 
-        private void AddFigure(Figure figure)
+        private void AddFigure(IFigure figure)
         {
-            _figures.Add(figure);
             _lastFigure = figure;
-            FieldChanged?.Invoke(Get());
         }
 
         private void MoveLastFigureByInput(ConsoleKey key)
@@ -87,9 +93,19 @@ namespace Tetris
                 MoveLastFigureRight();
                 return;
             }
-            if (key == ConsoleKey.LeftArrow) 
+            else if (key == ConsoleKey.LeftArrow) 
             {
                 MoveLastFigureLeft();
+                return;
+            }
+            else if (key == ConsoleKey.UpArrow)
+            {
+                RotateLastFigure();
+                return;
+            }
+            else if (key == ConsoleKey.DownArrow)
+            {
+                MoveLastFigure();
                 return;
             }
         }
@@ -103,6 +119,8 @@ namespace Tetris
 
             if (TryMove(_lastFigure) == false)
             {
+                Thread.Sleep(10000);
+                AddFigureToPlaced(_lastFigure);
                 _lastFigure = null;
                 return;
             }
@@ -143,7 +161,7 @@ namespace Tetris
             FieldChanged?.Invoke(Get());
         }
 
-        private bool TryMove(Figure figure)
+        private bool TryMove(IFigure figure)
         {
             foreach (var block in figure.Blocks) 
             {
@@ -152,19 +170,11 @@ namespace Tetris
                     return false;
                 }
 
-                foreach (var lyingFigure in _figures)
+                foreach (var lyingBlock in _placedBlocks)
                 {
-                    if (lyingFigure == figure)
+                    if (lyingBlock.X == block.X && lyingBlock.Y == block.Y + 1)
                     {
-                        continue;
-                    }
-
-                    foreach (var lyingBlock in lyingFigure.Blocks)
-                    {
-                        if (lyingBlock.X == block.X && lyingBlock.Y == block.Y + 1)
-                        {
-                            return false;
-                        }
+                        return false;
                     }
                 }
             }
@@ -172,7 +182,7 @@ namespace Tetris
             return true;
         }
 
-        private bool TryMoveRight(Figure figure)
+        private bool TryMoveRight(IFigure figure)
         {
             foreach (var block in figure.Blocks)
             {
@@ -181,19 +191,11 @@ namespace Tetris
                     return false;
                 }
 
-                foreach (var lyingFigure in _figures)
+                foreach (var lyingBlock in _placedBlocks)
                 {
-                    if (lyingFigure == figure)
+                    if (lyingBlock.X == block.X + 1 && lyingBlock.Y == block.Y + 1)
                     {
-                        continue;
-                    }
-
-                    foreach (var lyingBlock in lyingFigure.Blocks)
-                    {
-                        if (lyingBlock.X == block.X + 1 && lyingBlock.Y == block.Y + 1)
-                        {
-                            return false;
-                        }
+                        return false;
                     }
                 }
             }
@@ -201,7 +203,7 @@ namespace Tetris
             return true;
         }
 
-        private bool TryMoveLeft(Figure figure)
+        private bool TryMoveLeft(IFigure figure)
         {
             foreach (var block in figure.Blocks)
             {
@@ -210,19 +212,11 @@ namespace Tetris
                     return false;
                 }
 
-                foreach (var lyingFigure in _figures)
+                foreach (var lyingBlock in _placedBlocks)
                 {
-                    if (lyingFigure == figure)
+                    if (lyingBlock.X == block.X - 1 && lyingBlock.Y == block.Y + 1)
                     {
-                        continue;
-                    }
-
-                    foreach (var lyingBlock in lyingFigure.Blocks)
-                    {
-                        if (lyingBlock.X == block.X - 1 && lyingBlock.Y == block.Y + 1)
-                        {
-                            return false;
-                        }
+                        return false;
                     }
                 }
             }
@@ -230,16 +224,27 @@ namespace Tetris
             return true;
         }
 
+        private void RotateLastFigure()
+        {
+            if (_lastFigure == null)
+            {
+                return;
+            }
+
+            List<Block> nearBlocks = new List<Block>();
+
+            
+            
+            FieldChanged?.Invoke(Get());
+        }
+
         private bool GameOver()
         {
-            foreach (var figure in _figures) 
+            foreach (var block in _placedBlocks)
             {
-                foreach (var block in figure.Blocks)
+                if (block.Y == 0 && (TryMove(_lastFigure) == false))
                 {
-                    if (block.Y == 0 && (TryMove(_lastFigure) == false))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
@@ -257,9 +262,23 @@ namespace Tetris
             {
                 for (int j = 0; j < width; j++)
                 {
-                    _field[i, j] = '.';
+                    _field[i, j] = ' ';
                 }
             }
+        }
+
+        private void AddFigureToPlaced(IFigure figure)
+        {
+            _plasedFigures.Add(figure);
+            foreach(var block in figure.Blocks)
+            {
+                _placedBlocks.Add(block);
+            }
+        }
+
+        private FigureTypes GetNextFigureType(Random random)
+        {
+            return (FigureTypes)random.Next(Convert.ToInt32(FigureTypes.L));
         }
     }
 }

@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace Tetris
 {
     public class Input
     {
-        public event Action<ConsoleKey> KeyPressed;
+        public event Action<ConsoleKey>? KeyPressed;
 
-        public Input()
-        {
-            
-        }
+        public Input() { }
 
         public void ListenInput()
         {
