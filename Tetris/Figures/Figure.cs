@@ -1,12 +1,9 @@
-﻿
-using System.Diagnostics.CodeAnalysis;
-
-namespace Tetris.Figures
+﻿namespace Tetris.Figures
 {
     public class Figure : IFigure
     {
         protected List<Block> _blocks;
-
+        protected Block _center;
         public IEnumerable<Block> Blocks => _blocks;
 
         public Figure()
@@ -73,9 +70,25 @@ namespace Tetris.Figures
 
         }
 
-        public virtual void Rotate()
+        public void Rotate()
         {
-            throw new NotImplementedException();
+            if (_center == null)
+            {
+                return;
+            }
+
+            foreach (var block in _blocks)
+            {
+                if (block != _center)
+                {
+                    int[] newCoordinate = RotationSystem.Rotate(block.X, block.Y, _center.X, _center.Y);
+
+                    int newX = newCoordinate[0];
+                    int newY = newCoordinate[1];
+
+                    block.SetCoordinate(newX, newY);
+                }
+            }
         }
     }
 }

@@ -35,5 +35,11 @@
             _x += x;
             _y += y;
         }
+
+        public void SetCoordinate(int x, int y)
+        {
+            _x = x;
+            _y = y;
+        }
     }
 }

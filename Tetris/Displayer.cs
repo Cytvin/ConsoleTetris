@@ -1,5 +1,4 @@
-﻿
-namespace Tetris
+﻿namespace Tetris
 {
     public class Displayer
     {

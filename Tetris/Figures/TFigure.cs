@@ -1,5 +1,4 @@
-﻿
-namespace Tetris.Figures
+﻿namespace Tetris.Figures
 {
     public class TFigure : Figure
     {
@@ -14,6 +13,8 @@ namespace Tetris.Figures
             _blocks.Add(new Block(5, 0));
             _blocks.Add(new Block(6, 0));
             _blocks.Add(new Block(5, 1));
+
+            _center = _blocks[1];
         }
     }
 }

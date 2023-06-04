@@ -44,9 +44,9 @@ namespace Tetris
             {
                 if (LastFigureIsNull)
                 {
-                    //FigureTypes newFigureType = GetNextFigureType(_random);
+                    FigureTypes newFigureType = GetNextFigureType(_random);
 
-                    AddFigure(Figure.MakeFigure(FigureTypes.I));
+                    AddFigure(Figure.MakeFigure(newFigureType));
                     FieldChanged?.Invoke(Get());
                 }
 
@@ -57,7 +57,7 @@ namespace Tetris
                     MoveLastFigure();
                 }
 
-                Thread.Sleep(100);
+                Thread.Sleep(500);
             }
         }
 
@@ -119,7 +119,6 @@ namespace Tetris
 
             if (TryMove(_lastFigure) == false)
             {
-                Thread.Sleep(10000);
                 AddFigureToPlaced(_lastFigure);
                 _lastFigure = null;
                 return;
@@ -231,9 +230,7 @@ namespace Tetris
                 return;
             }
 
-            List<Block> nearBlocks = new List<Block>();
-
-            
+            _lastFigure.Rotate();
             
             FieldChanged?.Invoke(Get());
         }

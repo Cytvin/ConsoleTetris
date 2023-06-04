@@ -1,5 +1,4 @@
-﻿
-namespace Tetris.Figures
+﻿namespace Tetris.Figures
 {
     public class OFigure : Figure
     {
