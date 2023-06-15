@@ -16,7 +16,7 @@ namespace Tetris
         private int _width;
         private int _score;
 
-        public event Action<char[,]>? FieldChanged;
+        public event Action<char[,], int>? GameChanged;
         public bool LastFigureIsNull => _lastFigure == null;
         public bool IsGameOver => GameOver();
 
@@ -50,7 +50,7 @@ namespace Tetris
                     FigureTypes newFigureType = GetNextFigureType(_random);
 
                     AddFigure(Figure.MakeFigure(newFigureType));
-                    FieldChanged?.Invoke(Get());
+                    GameChanged?.Invoke(Get(), _score);
                 }
 
                 playing = !IsGameOver;
@@ -130,7 +130,7 @@ namespace Tetris
             }
 
             _lastFigure.Move();
-            FieldChanged?.Invoke(Get());
+            GameChanged?.Invoke(Get(), _score);
         }
 
         private void MoveLastFigureRight()
@@ -146,7 +146,7 @@ namespace Tetris
             }
 
             _lastFigure.MoveRight();
-            FieldChanged?.Invoke(Get());
+            GameChanged?.Invoke(Get(), _score);
         }
 
         private void MoveLastFigureLeft()
@@ -162,7 +162,7 @@ namespace Tetris
             }
 
             _lastFigure.MoveLeft();
-            FieldChanged?.Invoke(Get());
+            GameChanged?.Invoke(Get(), _score);
         }
 
         private bool TryMove(IFigure figure)
@@ -237,7 +237,7 @@ namespace Tetris
 
             _lastFigure.Rotate(_placedBlocks, _width, _height);
             
-            FieldChanged?.Invoke(Get());
+            GameChanged?.Invoke(Get(), _score);
         }
 
         private bool GameOver()
@@ -291,7 +291,7 @@ namespace Tetris
             {
                 List<Block> removalBlocks = new List<Block>();
 
-                foreach (var block in _placedBlocks)
+                foreach (var block in _placedBlocks.OrderByDescending(b => b.Y))
                 {
                     if (block.Y == lineNumber)
                     {
@@ -312,7 +312,7 @@ namespace Tetris
         {
             _placedBlocks = _placedBlocks.Except(removalBlocks).ToList();
 
-            _score += 100;
+            IncreasedScore();
 
             foreach(var block in _placedBlocks)
             {
@@ -322,7 +322,12 @@ namespace Tetris
                 }
             }
 
-            FieldChanged?.Invoke(Get());
+            GameChanged?.Invoke(Get(), _score);
+        }
+
+        private void IncreasedScore()
+        {
+            _score += 100;
         }
     }
 }

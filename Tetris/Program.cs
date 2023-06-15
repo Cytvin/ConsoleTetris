@@ -3,7 +3,7 @@
 Displayer displayer = new Displayer();
 Game game = new Game(24, 10);
 
-game.FieldChanged += displayer.DisplayField;
+game.GameChanged += displayer.Update;
 
 game.Play();
 

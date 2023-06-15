@@ -4,18 +4,39 @@
     {
         public Displayer() { }
 
-        public void DisplayScore(int score)
-        {
-
-        }
-
-        public void DisplayField(char[,] field)
+        public void Update(char[,] field, int score)
         {
             Console.Clear();
 
-            string frame = CreateFrame(field);
+            DisplayScore(score);
+            DisplayField(field);
+        }
 
-            Console.WriteLine(frame);
+        private void DisplayField(char[,] field)
+        {
+            int lineNumber = 0;
+            int columnNumber = 10;
+
+            string[] fieldFrame = CreateFrame(field).Split('\n');
+
+            foreach (var frameString in fieldFrame)
+            {
+                Console.SetCursorPosition(columnNumber, lineNumber);
+                Console.WriteLine(frameString);
+                lineNumber++;
+            }
+        }
+
+        private void DisplayScore(int score)
+        {
+            int lineNumber = 4;
+            int columnNumber = 2;
+
+            Console.SetCursorPosition(columnNumber, lineNumber);
+
+            Console.Write("Score: ");
+            Console.SetCursorPosition(columnNumber, ++lineNumber);
+            Console.Write(score.ToString());
         }
 
         private string CreateFrame(char[,] field)
@@ -36,7 +57,7 @@
                         stringField += "|";
                     }
 
-                    if ((i > 4 && i < 25) && (j > 0 && j < 11))
+                    if ((j > 0 && j < 11) && (i > 4 && i < 25))
                     {
                         stringField += field[i - 1, j - 1];
                     }
