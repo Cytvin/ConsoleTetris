@@ -1,4 +1,6 @@
-﻿namespace Tetris.Figures
+﻿using Microsoft.VisualBasic;
+
+namespace Tetris.Figures
 {
     public class Figure : IFigure
     {
@@ -70,9 +72,9 @@
 
         }
 
-        public void Rotate()
+        public void Rotate(IEnumerable<Block> placedBlocks, int fieldWidth, int fieldHeight)
         {
-            if (_center == null)
+            if (TryRotate(placedBlocks, fieldWidth, fieldHeight) == false)
             {
                 return;
             }
@@ -81,7 +83,7 @@
             {
                 if (block != _center)
                 {
-                    int[] newCoordinate = RotationSystem.Rotate(block.X, block.Y, _center.X, _center.Y);
+                    int[] newCoordinate = RotationSystem.GetNewCoordinate(block.X, block.Y, _center.X, _center.Y);
 
                     int newX = newCoordinate[0];
                     int newY = newCoordinate[1];
@@ -89,6 +91,45 @@
                     block.SetCoordinate(newX, newY);
                 }
             }
+        }
+
+        private bool TryRotate(IEnumerable<Block> placedBlocks, int fieldWidth, int fieldHeight)
+        {
+            if (_center == null)
+            {
+                return false;
+            }
+
+            foreach (var block in _blocks)
+            {
+                if (block != _center)
+                {
+                    int[] newCoordinate = RotationSystem.GetNewCoordinate(block.X, block.Y, _center.X, _center.Y);
+
+                    int newX = newCoordinate[0];
+                    int newY = newCoordinate[1];
+
+                    if (newY > fieldHeight)
+                    {
+                        return false;
+                    }
+
+                    if (newX > fieldWidth - 1 || newX < 0)
+                    {
+                        return false;
+                    }
+
+                    foreach (var placedBlock in placedBlocks)
+                    {
+                        if (placedBlock.X == newX && placedBlock.Y == newY)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
         }
     }
 }

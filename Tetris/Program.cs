@@ -1,7 +1,7 @@
 ﻿using Tetris;
 
 Displayer displayer = new Displayer();
-Game game = new Game(20, 10);
+Game game = new Game(24, 10);
 
 game.FieldChanged += displayer.DisplayField;
 

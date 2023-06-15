@@ -16,7 +16,7 @@
             { 0, 0, 1 }
         };
 
-        public static int[] Rotate(int blockX, int blockY, int centerX, int centerY)
+        public static int[] GetNewCoordinate(int blockX, int blockY, int centerX, int centerY)
         {
             _movementMatrix[2, 0] = centerX * -1;
             _movementMatrix[2, 1] = centerY * -1;

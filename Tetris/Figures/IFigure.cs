@@ -8,6 +8,6 @@
         void Move();
         void MoveLeft();
         void MoveRight();
-        void Rotate();
+        void Rotate(IEnumerable<Block> placedBlocks, int fieldWidth, int fieldHeight);
     }
 }

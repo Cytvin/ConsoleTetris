@@ -1,4 +1,5 @@
-﻿using Tetris.Figures;
+﻿using System.Diagnostics.Contracts;
+using Tetris.Figures;
 
 namespace Tetris
 {
@@ -13,6 +14,7 @@ namespace Tetris
 
         private int _height;
         private int _width;
+        private int _score;
 
         public event Action<char[,]>? FieldChanged;
         public bool LastFigureIsNull => _lastFigure == null;
@@ -22,6 +24,7 @@ namespace Tetris
         {
             _height = height;
             _width = width;
+            _score = 0;
             _field = new char[height, width];
             _plasedFigures = new List<IFigure>();
             _placedBlocks = new List<Block>();
@@ -55,6 +58,8 @@ namespace Tetris
                 if (playing)
                 {
                     MoveLastFigure();
+
+                    FindingFullLine();
                 }
 
                 Thread.Sleep(500);
@@ -230,7 +235,7 @@ namespace Tetris
                 return;
             }
 
-            _lastFigure.Rotate();
+            _lastFigure.Rotate(_placedBlocks, _width, _height);
             
             FieldChanged?.Invoke(Get());
         }
@@ -276,6 +281,48 @@ namespace Tetris
         private FigureTypes GetNextFigureType(Random random)
         {
             return (FigureTypes)random.Next(Convert.ToInt32(FigureTypes.L));
+        }
+
+        private void FindingFullLine()
+        {
+            int lineNumber = _height - 1;
+
+            while (lineNumber > 4)
+            {
+                List<Block> removalBlocks = new List<Block>();
+
+                foreach (var block in _placedBlocks)
+                {
+                    if (block.Y == lineNumber)
+                    {
+                        removalBlocks.Add(block);
+                    }
+                }
+
+                if (removalBlocks.Count == _width)
+                {
+                    DeleteFullLine(removalBlocks, lineNumber);
+                }
+
+                lineNumber--;
+            }
+        }
+
+        private void DeleteFullLine(List<Block> removalBlocks, int lineNumber)
+        {
+            _placedBlocks = _placedBlocks.Except(removalBlocks).ToList();
+
+            _score += 100;
+
+            foreach(var block in _placedBlocks)
+            {
+                if (block.Y < lineNumber) 
+                {
+                    block.Move();
+                }
+            }
+
+            FieldChanged?.Invoke(Get());
         }
     }
 }
