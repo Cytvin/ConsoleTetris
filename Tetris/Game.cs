@@ -52,6 +52,8 @@ namespace Tetris
 
             while (playing)
             {
+                FindingFullLine();
+
                 if (CurrentFigureIsNull)
                 {
                     FigureTypes newFigureType = GetNextFigureType(_random);
@@ -66,10 +68,8 @@ namespace Tetris
                 {
                     MoveCurrentFigure();
 
-                    FindingFullLine();
+                    Thread.Sleep(_gameSpeed);
                 }
-
-                Thread.Sleep(_gameSpeed);
             }
 
             _input.KeyPressed -= MoveCurrentFigureByInput;
@@ -233,7 +233,7 @@ namespace Tetris
         {
             int lineNumber = _height - 1;
 
-            while (lineNumber > 4)
+            while (lineNumber > 3)
             {
                 List<Block> removalBlocks = new List<Block>();
 
@@ -245,33 +245,37 @@ namespace Tetris
                     }
                 }
 
-                if (removalBlocks.Count == _width)
+                if (removalBlocks.Count < _width)
                 {
-                    DeleteFullLine(removalBlocks, lineNumber);
+                    lineNumber--;
+                    continue;
                 }
 
-                lineNumber--;
+                DeleteFullLine(removalBlocks, lineNumber);
             }
+
+            GameChanged?.Invoke(Get(), _score, _level);
         }
 
         private void DeleteFullLine(List<Block> removalBlocks, int lineNumber)
         {
             _placedBlocks = _placedBlocks.Except(removalBlocks).ToList();
+            _removedLinesCounter++;
 
+            MoveBlocksAboveRemovedLine(lineNumber);
             IncreasedScore();
+            ChangeLevel();
+        }
 
-            foreach(var block in _placedBlocks)
+        private void MoveBlocksAboveRemovedLine(int removedLineNumber)
+        {
+            foreach (var block in _placedBlocks)
             {
-                if (block.Y < lineNumber) 
+                if (block.Y < removedLineNumber)
                 {
                     block.MoveDown();
                 }
             }
-
-            _removedLinesCounter++;
-            ChangeLevel();
-
-            GameChanged?.Invoke(Get(), _score, _level);
         }
 
         private void IncreasedScore()
