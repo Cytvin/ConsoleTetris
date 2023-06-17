@@ -15,19 +15,14 @@
             _y = y;
         }
 
-        public void Move()
+        public void MoveDown()
         {
             _y++;
         }
 
-        public void MoveRight()
+        public void MoveInDirection(int direction)
         {
-            _x++;
-        }
-
-        public void MoveLeft()
-        {
-            _x--;
+            _x += direction;
         }
 
         public void SetCoordinate(int x, int y)

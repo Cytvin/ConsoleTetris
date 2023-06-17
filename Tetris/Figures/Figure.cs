@@ -43,33 +43,56 @@ namespace Tetris.Figures
             }
         }
 
-        public void Move()
+        public void MoveDown()
         {
             foreach (var block in _blocks)
             {
-                block.Move();
+                block.MoveDown();
             }
         }
 
-        public void MoveRight()
+        public void MoveInDirection(int direction, int fieldWidth, IEnumerable<Block> placedBlocks)
+        {
+            if (TryMoveInDirection(direction, fieldWidth, placedBlocks) == false)
+            {
+                return;
+            }
+
+            foreach (var block in _blocks)
+            {
+                block.MoveInDirection(direction);
+            }
+        }
+
+        private bool TryMoveInDirection(int direction, int fieldWidth, IEnumerable<Block> placedBlocks)
         {
             foreach (var block in _blocks)
             {
-                block.MoveRight();
+                if (direction > 0)
+                {
+                    if (block.X == fieldWidth - 1)
+                    {
+                        return false;
+                    }
+                }
+                else if (direction < 0)
+                {
+                    if (block.X == 0)
+                    {
+                        return false;
+                    }
+                }
+
+                foreach (var lyingBlock in placedBlocks)
+                {
+                    if (lyingBlock.X == block.X + direction && lyingBlock.Y == block.Y)
+                    {
+                        return false;
+                    }
+                }
             }
-        }
 
-        public void MoveLeft()
-        {
-            foreach (var block in _blocks)
-            {
-                block.MoveLeft();
-            }
-        }
-
-        public void DeleteBlock()
-        {
-
+            return true;
         }
 
         public void Rotate(IEnumerable<Block> placedBlocks, int fieldWidth, int fieldHeight)

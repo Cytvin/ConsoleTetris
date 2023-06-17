@@ -4,10 +4,8 @@
     {
         IEnumerable<Block> Blocks { get; }
 
-        void DeleteBlock();
-        void Move();
-        void MoveLeft();
-        void MoveRight();
+        void MoveDown();
+        void MoveInDirection(int direction, int fieldWidth, IEnumerable<Block> placedBlocks);
         void Rotate(IEnumerable<Block> placedBlocks, int fieldWidth, int fieldHeight);
     }
 }

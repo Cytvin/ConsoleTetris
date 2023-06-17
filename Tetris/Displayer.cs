@@ -4,11 +4,12 @@
     {
         public Displayer() { }
 
-        public void Update(char[,] field, int score)
+        public void Update(char[,] field, int score, int level)
         {
             Console.Clear();
 
             DisplayScore(score);
+            DisplayLevel(level);
             DisplayField(field);
         }
 
@@ -37,6 +38,18 @@
             Console.Write("Score: ");
             Console.SetCursorPosition(columnNumber, ++lineNumber);
             Console.Write(score.ToString());
+        }
+
+        private void DisplayLevel(int level)
+        {
+            int lineNumber = 8;
+            int columnNumber = 2;
+
+            Console.SetCursorPosition(columnNumber, lineNumber);
+
+            Console.Write("Level: ");
+            Console.SetCursorPosition(columnNumber, ++lineNumber);
+            Console.Write(level.ToString());
         }
 
         private string CreateFrame(char[,] field)

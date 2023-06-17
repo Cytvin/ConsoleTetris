@@ -8,32 +8,39 @@ namespace Tetris
         private char[,] _field;
         private List<IFigure> _plasedFigures;
         private List<Block> _placedBlocks;
-        private IFigure? _lastFigure;
+        private IFigure? _currentFigure;
         private Input _input;
         private Random _random;
 
         private int _height;
         private int _width;
         private int _score;
+        private int _level;
+        private int _removedLinesCounter;
+        private int _gameSpeed;
 
-        public event Action<char[,], int>? GameChanged;
-        public bool LastFigureIsNull => _lastFigure == null;
+        public event Action<char[,], int, int>? GameChanged;
+        public bool CurrentFigureIsNull => _currentFigure == null;
         public bool IsGameOver => GameOver();
 
-        public Game(int height, int width) 
+        public Game(int height, int width)
         {
             _height = height;
             _width = width;
             _score = 0;
+            _level = 1;
+            _removedLinesCounter = 0;
+            _gameSpeed = 500;
+
             _field = new char[height, width];
             _plasedFigures = new List<IFigure>();
             _placedBlocks = new List<Block>();
             _input = new Input();
             _random = new Random();
-            _input.KeyPressed += MoveLastFigureByInput;
-            _lastFigure = Figure.MakeFigure(GetNextFigureType(_random));
+            _input.KeyPressed += MoveCurrentFigureByInput;
+            _currentFigure = Figure.MakeFigure(GetNextFigureType(_random));
 
-            Initializing(height, width);
+            InitializingField(height, width);
         }
 
         public void Play()
@@ -45,34 +52,36 @@ namespace Tetris
 
             while (playing)
             {
-                if (LastFigureIsNull)
+                if (CurrentFigureIsNull)
                 {
                     FigureTypes newFigureType = GetNextFigureType(_random);
 
                     AddFigure(Figure.MakeFigure(newFigureType));
-                    GameChanged?.Invoke(Get(), _score);
+                    GameChanged?.Invoke(Get(), _score, _level);
                 }
 
                 playing = !IsGameOver;
 
                 if (playing)
                 {
-                    MoveLastFigure();
+                    MoveCurrentFigure();
 
                     FindingFullLine();
                 }
 
-                Thread.Sleep(500);
+                Thread.Sleep(_gameSpeed);
             }
+
+            _input.KeyPressed -= MoveCurrentFigureByInput;
         }
 
         private char[,] Get()
         {
             Clear();
 
-            if (LastFigureIsNull == false)
+            if (CurrentFigureIsNull == false)
             {
-                foreach (var block in _lastFigure.Blocks)
+                foreach (var block in _currentFigure.Blocks)
                 {
                     _field[block.Y, block.X] = block.Symbol;
                 }
@@ -88,81 +97,60 @@ namespace Tetris
 
         private void AddFigure(IFigure figure)
         {
-            _lastFigure = figure;
+            _currentFigure = figure;
         }
 
-        private void MoveLastFigureByInput(ConsoleKey key)
+        private void MoveCurrentFigureByInput(ConsoleKey key)
         {
             if (key == ConsoleKey.RightArrow)
             {
-                MoveLastFigureRight();
+                MoveCurrentFigureInDirection(1);
                 return;
             }
             else if (key == ConsoleKey.LeftArrow) 
             {
-                MoveLastFigureLeft();
+                MoveCurrentFigureInDirection(-1);
                 return;
             }
             else if (key == ConsoleKey.UpArrow)
             {
-                RotateLastFigure();
+                RotateCurrentFigure();
                 return;
             }
             else if (key == ConsoleKey.DownArrow)
             {
-                MoveLastFigure();
+                MoveCurrentFigure();
                 return;
             }
         }
 
-        private void MoveLastFigure()
+        private void MoveCurrentFigure()
         {
-            if (_lastFigure == null)
+            if (_currentFigure == null)
             {
                 return;
             }
 
-            if (TryMove(_lastFigure) == false)
+            if (TryMove(_currentFigure) == false)
             {
-                AddFigureToPlaced(_lastFigure);
-                _lastFigure = null;
+                AddFigureToPlaced(_currentFigure);
+                _currentFigure = null;
                 return;
             }
 
-            _lastFigure.Move();
-            GameChanged?.Invoke(Get(), _score);
+            _currentFigure.MoveDown();
+            GameChanged?.Invoke(Get(), _score, _level);
         }
 
-        private void MoveLastFigureRight()
+        private void MoveCurrentFigureInDirection(int direction)
         {
-            if (_lastFigure == null)
+            if (_currentFigure == null)
             {
                 return;
             }
 
-            if (TryMoveRight(_lastFigure) == false)
-            {
-                return;
-            }
-
-            _lastFigure.MoveRight();
-            GameChanged?.Invoke(Get(), _score);
-        }
-
-        private void MoveLastFigureLeft()
-        {
-            if (_lastFigure == null)
-            {
-                return;
-            }
-
-            if (TryMoveLeft(_lastFigure) == false)
-            {
-                return;
-            }
-
-            _lastFigure.MoveLeft();
-            GameChanged?.Invoke(Get(), _score);
+            _currentFigure.MoveInDirection(direction, _width, _placedBlocks);
+            GameChanged?.Invoke(Get(), _score, _level);
         }
 
         private bool TryMove(IFigure figure)
@@ -186,65 +174,23 @@ namespace Tetris
             return true;
         }
 
-        private bool TryMoveRight(IFigure figure)
+        private void RotateCurrentFigure()
         {
-            foreach (var block in figure.Blocks)
-            {
-                if (block.X == _width - 1)
-                {
-                    return false;
-                }
-
-                foreach (var lyingBlock in _placedBlocks)
-                {
-                    if (lyingBlock.X == block.X + 1 && lyingBlock.Y == block.Y + 1)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        private bool TryMoveLeft(IFigure figure)
-        {
-            foreach (var block in figure.Blocks)
-            {
-                if (block.X == 0)
-                {
-                    return false;
-                }
-
-                foreach (var lyingBlock in _placedBlocks)
-                {
-                    if (lyingBlock.X == block.X - 1 && lyingBlock.Y == block.Y + 1)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        private void RotateLastFigure()
-        {
-            if (_lastFigure == null)
+            if (_currentFigure == null)
             {
                 return;
             }
 
-            _lastFigure.Rotate(_placedBlocks, _width, _height);
+            _currentFigure.Rotate(_placedBlocks, _width, _height);
             
-            GameChanged?.Invoke(Get(), _score);
+            GameChanged?.Invoke(Get(), _score, _level);
         }
 
         private bool GameOver()
         {
             foreach (var block in _placedBlocks)
             {
-                if (block.Y == 0 && (TryMove(_lastFigure) == false))
+                if (block.Y == 4 && (TryMove(_currentFigure) == false))
                 {
                     return true;
                 }
@@ -255,10 +201,10 @@ namespace Tetris
 
         private void Clear()
         {
-            Initializing(_height, _width);
+            InitializingField(_height, _width);
         }
 
-        private void Initializing(int height, int width)
+        private void InitializingField(int height, int width)
         {
             for (int i = 0; i < height; i++)
             {
@@ -318,16 +264,29 @@ namespace Tetris
             {
                 if (block.Y < lineNumber) 
                 {
-                    block.Move();
+                    block.MoveDown();
                 }
             }
 
-            GameChanged?.Invoke(Get(), _score);
+            _removedLinesCounter++;
+            ChangeLevel();
+
+            GameChanged?.Invoke(Get(), _score, _level);
         }
 
         private void IncreasedScore()
         {
-            _score += 100;
+            _score += 100 * _level;
+        }
+
+        private void ChangeLevel()
+        {
+            if (_removedLinesCounter == 10)
+            {
+                _removedLinesCounter = 0;
+                _level++;
+                _gameSpeed -= 50;
+            }
         }
     }
 }
