@@ -9,6 +9,7 @@ namespace Tetris
         private List<IFigure> _plasedFigures;
         private List<Block> _placedBlocks;
         private IFigure? _currentFigure;
+        private IFigure? _nextFigure;
         private Input _input;
         private Random _random;
 
@@ -19,7 +20,7 @@ namespace Tetris
         private int _removedLinesCounter;
         private int _gameSpeed;
 
-        public event Action<char[,], int, int>? GameChanged;
+        public event Action<char[,], int, int, char[,]>? GameChanged;
         public bool IsGameOver => GameOver();
 
         public Game(int height, int width)
@@ -37,7 +38,8 @@ namespace Tetris
             _input = new Input();
             _random = new Random();
             _input.KeyPressed += MoveCurrentFigureByInput;
-            _currentFigure = Figure.MakeFigure(GetNextFigureType(_random));
+            SetCurrentFigure(_random);
+            _nextFigure = Figure.MakeFigure(GetNextFigureType(_random));
 
             InitializingField(height, width);
         }
@@ -56,8 +58,10 @@ namespace Tetris
                     AddFigureToPlaced(_currentFigure);
                     FindingFullLine();
 
-                    SetCurrentFigure(_random);
-                    GameChanged?.Invoke(Get(), _score, _level);
+                    _currentFigure = _nextFigure;
+                    _nextFigure = Figure.MakeFigure(GetNextFigureType(_random));
+
+                    GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
                 }
 
                 playing = !IsGameOver;
@@ -97,6 +101,11 @@ namespace Tetris
             _currentFigure = Figure.MakeFigure(newFigureType);
         }
 
+        private FigureTypes GetNextFigureType(Random random)
+        {
+            return (FigureTypes)random.Next(7);
+        }
+
         private void MoveCurrentFigureByInput(ConsoleKey key)
         {
             if (key == ConsoleKey.RightArrow)
@@ -129,7 +138,7 @@ namespace Tetris
             }
 
             _currentFigure.MoveDown(_placedBlocks, _height);
-            GameChanged?.Invoke(Get(), _score, _level);
+            GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
         }
 
         private void MoveCurrentFigureInDirection(int direction)
@@ -140,7 +149,7 @@ namespace Tetris
             }
 
             _currentFigure.MoveInDirection(_placedBlocks, direction, _width);
-            GameChanged?.Invoke(Get(), _score, _level);
+            GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
         }
 
         private void RotateCurrentFigure()
@@ -152,7 +161,7 @@ namespace Tetris
 
             _currentFigure.Rotate(_placedBlocks, _width, _height);
             
-            GameChanged?.Invoke(Get(), _score, _level);
+            GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
         }
 
         private bool GameOver()
@@ -193,11 +202,6 @@ namespace Tetris
             }
         }
 
-        private FigureTypes GetNextFigureType(Random random)
-        {
-            return (FigureTypes)random.Next(Convert.ToInt32(FigureTypes.L));
-        }
-
         private void FindingFullLine()
         {
             int lineNumber = _height - 1;
@@ -223,7 +227,7 @@ namespace Tetris
                 DeleteFullLine(removalBlocks, lineNumber);
             }
 
-            GameChanged?.Invoke(Get(), _score, _level);
+            GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
         }
 
         private void DeleteFullLine(List<Block> removalBlocks, int lineNumber)

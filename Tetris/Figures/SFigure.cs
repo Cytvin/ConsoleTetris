@@ -15,6 +15,14 @@
             _blocks.Add(new Block(4, 3));
 
             _center = _blocks[1];
+
+            char[,] preview =
+            {
+                { ' ', ' ', _blockSymbol, _blockSymbol},
+                { ' ', _blockSymbol , _blockSymbol, ' '}
+            };
+
+            Preview = preview;
         }
     }
 }

@@ -6,9 +6,11 @@ namespace Tetris.Figures
     {
         protected List<Block> _blocks;
         protected Block _center;
+        protected char _blockSymbol = '*';
+
         public IEnumerable<Block> Blocks => _blocks;
         public bool IsPlaced { get; private set; } = false;
-
+        public char[,] Preview { get; protected set; }
         public Figure()
         {
             _blocks = new List<Block>();

@@ -4,6 +4,7 @@
     {
         IEnumerable<Block> Blocks { get; }
         bool IsPlaced { get; }
+        char[,] Preview { get; }
 
         void MoveDown(IEnumerable<Block> placedBlock, int fieldHeight);
         void MoveInDirection(IEnumerable<Block> placedBlocks, int direction, int fieldWidth);
