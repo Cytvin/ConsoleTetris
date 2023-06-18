@@ -7,6 +7,7 @@ namespace Tetris.Figures
         protected List<Block> _blocks;
         protected Block _center;
         public IEnumerable<Block> Blocks => _blocks;
+        public bool IsPlaced { get; private set; } = false;
 
         public Figure()
         {
@@ -43,17 +44,44 @@ namespace Tetris.Figures
             }
         }
 
-        public void MoveDown()
+        public void MoveDown(IEnumerable<Block> placedBlock, int fieldHeight)
         {
+            if(TryMoveDown(placedBlock, fieldHeight) == false)
+            {
+                IsPlaced = true;
+                return;
+            }
+
             foreach (var block in _blocks)
             {
                 block.MoveDown();
             }
         }
 
-        public void MoveInDirection(int direction, int fieldWidth, IEnumerable<Block> placedBlocks)
+        private bool TryMoveDown(IEnumerable<Block> placedBlock, int fieldHeight)
         {
-            if (TryMoveInDirection(direction, fieldWidth, placedBlocks) == false)
+            foreach (var block in _blocks)
+            {
+                if (block.Y == fieldHeight - 1)
+                {
+                    return false;
+                }
+
+                foreach (var lyingBlock in placedBlock)
+                {
+                    if (lyingBlock.X == block.X && lyingBlock.Y == block.Y + 1)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public void MoveInDirection(IEnumerable<Block> placedBlocks, int direction, int fieldWidth)
+        {
+            if (TryMoveInDirection(placedBlocks, direction, fieldWidth) == false)
             {
                 return;
             }
@@ -62,9 +90,11 @@ namespace Tetris.Figures
             {
                 block.MoveInDirection(direction);
             }
+
+            IsPlaced = false;
         }
 
-        private bool TryMoveInDirection(int direction, int fieldWidth, IEnumerable<Block> placedBlocks)
+        private bool TryMoveInDirection(IEnumerable<Block> placedBlocks, int direction, int fieldWidth)
         {
             foreach (var block in _blocks)
             {
@@ -114,6 +144,8 @@ namespace Tetris.Figures
                     block.SetCoordinate(newX, newY);
                 }
             }
+
+            IsPlaced = false;
         }
 
         private bool TryRotate(IEnumerable<Block> placedBlocks, int fieldWidth, int fieldHeight)
@@ -132,7 +164,7 @@ namespace Tetris.Figures
                     int newX = newCoordinate[0];
                     int newY = newCoordinate[1];
 
-                    if (newY > fieldHeight)
+                    if (newY > fieldHeight - 1)
                     {
                         return false;
                     }
