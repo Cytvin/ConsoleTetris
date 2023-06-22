@@ -14,6 +14,15 @@
             DisplayField(field);
         }
 
+        public void DisplayMessage(string message)
+        {
+            int lineNumber = 10;
+            int columnNumber = 5;
+
+            Console.SetCursorPosition(columnNumber, ++lineNumber);
+            Console.Write(message);
+        }
+
         private void DisplayScore(int score)
         {
             int lineNumber = 4;

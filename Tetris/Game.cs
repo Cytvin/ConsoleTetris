@@ -8,8 +8,8 @@ namespace Tetris
         private char[,] _field;
         private List<IFigure> _plasedFigures;
         private List<Block> _placedBlocks;
-        private IFigure? _currentFigure;
-        private IFigure? _nextFigure;
+        private IFigure _currentFigure;
+        private IFigure _nextFigure;
         private Input _input;
         private Random _random;
 
@@ -19,9 +19,12 @@ namespace Tetris
         private int _level;
         private int _removedLinesCounter;
         private int _gameSpeed;
+        private int _waitTime;
 
         public event Action<char[,], int, int, char[,]>? GameChanged;
-        public bool IsGameOver => GameOver();
+        public event Action<string>? GameOver;
+
+        public bool IsGameOver => !TryPlaceNewFigure();
 
         public Game(int height, int width)
         {
@@ -31,6 +34,7 @@ namespace Tetris
             _level = 1;
             _removedLinesCounter = 0;
             _gameSpeed = 500;
+            _waitTime = 500;
 
             _field = new char[height, width];
             _plasedFigures = new List<IFigure>();
@@ -38,7 +42,7 @@ namespace Tetris
             _input = new Input();
             _random = new Random();
             _input.KeyPressed += MoveCurrentFigureByInput;
-            SetCurrentFigure(_random);
+            _currentFigure = Figure.MakeFigure(GetNextFigureType(_random));
             _nextFigure = Figure.MakeFigure(GetNextFigureType(_random));
 
             InitializingField(height, width);
@@ -49,35 +53,44 @@ namespace Tetris
             Thread inputTread = new Thread(_input.ListenInput);
             inputTread.Start();
 
-            bool playing = true;
-
-            while (playing)
+            while (true)
             {
+                if (_level > 10)
+                {
+                    GameOver?.Invoke("!!!!! Game  Done !!!!!");
+                    break;
+                }
+
+                if (IsGameOver)
+                {
+                    GameOver?.Invoke("***** Game  Over *****");
+                    break;
+                }
+
                 if (_currentFigure.IsPlaced)
                 {
-                    AddFigureToPlaced(_currentFigure);
-                    FindingFullLine();
+                    Thread.Sleep(_waitTime);
 
-                    _currentFigure = _nextFigure;
-                    _nextFigure = Figure.MakeFigure(GetNextFigureType(_random));
+                    if (_currentFigure.IsPlaced)
+                    {
+                        AddFigureToPlaced(_currentFigure);
+                        FindingFullLine();
 
-                    GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
+                        _currentFigure = _nextFigure;
+                        _nextFigure = Figure.MakeFigure(GetNextFigureType(_random));
+                        continue;
+                    }
                 }
 
-                playing = !IsGameOver;
+                MoveCurrentFigureDown();
 
-                if (playing)
-                {
-                    MoveCurrentFigure();
-
-                    Thread.Sleep(_gameSpeed);
-                }
+                Thread.Sleep(_gameSpeed);
             }
 
             _input.KeyPressed -= MoveCurrentFigureByInput;
         }
 
-        private char[,] Get()
+        private char[,] GetField()
         {
             ClearField();
 
@@ -92,13 +105,6 @@ namespace Tetris
             }
 
             return _field;
-        }
-
-        private void SetCurrentFigure(Random random)
-        {
-            FigureTypes newFigureType = GetNextFigureType(random);
-
-            _currentFigure = Figure.MakeFigure(newFigureType);
         }
 
         private FigureTypes GetNextFigureType(Random random)
@@ -125,56 +131,40 @@ namespace Tetris
             }
             else if (key == ConsoleKey.DownArrow)
             {
-                MoveCurrentFigure();
+                MoveCurrentFigureDown();
                 return;
             }
         }
 
-        private void MoveCurrentFigure()
+        private void MoveCurrentFigureDown()
         {
-            if (_currentFigure == null)
-            {
-                return;
-            }
-
             _currentFigure.MoveDown(_placedBlocks, _height);
-            GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
+            GameChanged?.Invoke(GetField(), _score, _level, _nextFigure.Preview);
         }
 
         private void MoveCurrentFigureInDirection(int direction)
         {
-            if (_currentFigure == null)
-            {
-                return;
-            }
-
             _currentFigure.MoveInDirection(_placedBlocks, direction, _width);
-            GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
+            GameChanged?.Invoke(GetField(), _score, _level, _nextFigure.Preview);
         }
 
         private void RotateCurrentFigure()
         {
-            if (_currentFigure == null)
-            {
-                return;
-            }
-
-            _currentFigure.Rotate(_placedBlocks, _width, _height);
-            
-            GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
+            _currentFigure.Rotate(_placedBlocks, _width, _height);   
+            GameChanged?.Invoke(GetField(), _score, _level, _nextFigure.Preview);
         }
 
-        private bool GameOver()
+        private bool TryPlaceNewFigure()
         {
             foreach (var block in _placedBlocks)
             {
                 if (block.Y < 4)
                 {
-                    return true;
+                    return false;
                 }
             }
 
-            return false;
+            return true;
         }
 
         private void ClearField()
@@ -227,7 +217,7 @@ namespace Tetris
                 DeleteFullLine(removalBlocks, lineNumber);
             }
 
-            GameChanged?.Invoke(Get(), _score, _level, _nextFigure.Preview);
+            GameChanged?.Invoke(GetField(), _score, _level, _nextFigure.Preview);
         }
 
         private void DeleteFullLine(List<Block> removalBlocks, int lineNumber)
@@ -263,6 +253,7 @@ namespace Tetris
                 _removedLinesCounter = 0;
                 _level++;
                 _gameSpeed -= 50;
+                _waitTime -= 25;
             }
         }
     }
